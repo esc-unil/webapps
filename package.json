@@ -1,0 +1,19 @@
+{
+  "name": "webapps",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/esc-unil/webapps.git"
+  },
+  "author": "pineau",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/esc-unil/webapps/issues"
+  },
+  "homepage": "https://github.com/esc-unil/webapps"
+}
