@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/esc-unil/webapps/issues"
   },
-  "homepage": "https://github.com/esc-unil/webapps"
+  "homepage": "https://github.com/esc-unil/webapps",
+  "dependencies": {
+    "koa": "^0.20.0",
+    "koa-cors": "0.0.14",
+    "koa-router": "^5.0.1"
+  }
 }
