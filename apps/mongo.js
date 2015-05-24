@@ -7,6 +7,8 @@
 var async = require('async');
 var mongoClient = require('mongodb').MongoClient;
 
+var monitoring = require('./db.json');
+
 function run(database, col, target){
 //
     var login = '';
