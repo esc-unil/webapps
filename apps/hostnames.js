@@ -25,12 +25,12 @@ function run(query, app){
         if (err){app.json({error: err});}
         else {
             var results = {};
-            query.target = {};
-            if (query.class != 'all' && query.class != 'null'){query.target.class = query.class;}
-            else if (query.class === 'null') {query.target.class = null;}
-            async.each(
+            async.eachSeries(
                 ['platforms', 'keywords', 'data'],
                 function (item, cb){
+                    query.target = {};
+                    if (query.class != 'all' && query.class != 'null' && query.class != ''){query.target.class = query.class;}
+                    else if (query.class === 'null') {query.target.class = null;}
                     requests[item](db, query, function(err, res){
                         if (err){results[item]={error: err};}
                         else {results[item]=res;}
@@ -48,6 +48,7 @@ function run(query, app){
 }
 
 requests.data = function(db, query, callback){
+    console.log(query.target);
     db.collection(query.col).find(query.target).toArray(function (err, res) {
         if (err) {callback(err);}
         else {callback(null, res);}
@@ -59,7 +60,6 @@ requests.platforms = function(db, query, callback){
     async.each(
         database.platforms,
         function(item, cb) {
-            //var target = {};
             if (item != 'total') query.target.platforms = item;
             db.collection(query.col).count(query.target, function (err, res) {
                 if (err) {results[item] = 'error';}
@@ -76,10 +76,10 @@ requests.platforms = function(db, query, callback){
 
 requests.keywords = function(db, query, callback){
     var results = {};
-    async.each(
+    async.eachLimit(
         database.keywords,
+        20,
         function(item, cb) {
-            //var target = {};
             if (item != 'total') query.target.keywords = item;
             db.collection(query.col).count(query.target, function (err, res) {
                 if (err) {results[item] = 'error';}
