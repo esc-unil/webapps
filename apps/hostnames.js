@@ -21,11 +21,11 @@ function run(query, app){
         else {
             var results = {};
             async.each(
-                ['platforms'],
+                ['platforms', 'keywords', 'data'],
                 function (item, cb){
                     requests[item](db, query, function(err, res){
-                        if (err){results['platforms']={error: err};}
-                        else {results['platforms']=res;}
+                        if (err){results[item]={error: err};}
+                        else {results[item]=res;}
                         cb();
                     });
                 },
@@ -39,6 +39,12 @@ function run(query, app){
     });
 }
 
+requests.data = function(db, query, callback){
+    db.collection(query.col).find({}).toArray(function (err, res) {
+        if (err) {callback(err);}
+        else {callback(null, res);}
+    });
+};
 
 requests.platforms = function(db, query, callback){
     var results = {};
@@ -47,6 +53,26 @@ requests.platforms = function(db, query, callback){
         function(item, cb) {
             var target = {};
             if (item != 'total') target = {platforms: item};
+            db.collection(query.col).count(target, function (err, res) {
+                if (err) {results[item] = 'error';}
+                else {results[item]= res;}
+                cb();
+            });
+        },
+        function(err){
+            if (err){callback(err);}
+            else{callback(null,results);}
+        }
+    );
+};
+
+requests.keywords = function(db, query, callback){
+    var results = {};
+    async.each(
+        database.keywords,
+        function(item, cb) {
+            var target = {};
+            if (item != 'total') target = {keywords: item};
             db.collection(query.col).count(target, function (err, res) {
                 if (err) {results[item] = 'error';}
                 else {results[item]= res;}
