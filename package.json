@@ -17,8 +17,9 @@
   },
   "homepage": "https://github.com/esc-unil/webapps",
   "dependencies": {
-    "koa": "^0.20.0",
-    "koa-cors": "0.0.14",
-    "koa-router": "^5.0.1"
+    "cookie-session": "^1.1.0",
+    "cors": "^2.6.0",
+    "express": "^4.12.4",
+    "mongodb": "^2.0.33"
   }
 }

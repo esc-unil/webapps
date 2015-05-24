@@ -2,33 +2,20 @@
 /**
  * Created by tpineau
  *
- * node --harmony server.js
  */
 
-var app = require('koa')();
-var router = require('koa-router')();
-var cors = require('koa-cors');
 
-var mongo = require('./apps/mongo.js');
+var express = require('express');
+var cors = require('cors');
 
-
-/*
-
-router.get('/websearch/:db/:param', function *(next) {
- this.body = this.params;
- console.log(this.params);
-});
-*/
+var mongo= require ('./apps/mongo.js');
 
 
-
-router.get('/websearch', function *(next) {
- this.body = this.query;
-});
+var app = express();
+app.use(cors({origin:'http://www.lactame.com'}));
 
 
-app.name = 'Web Intelligence - UNIL';
-app.use(cors());
-app.use(router.routes());
-app.use(router.allowedMethods());
-app.listen('3000');
+app.get('/websearch', function(req, res) {mongo.run(req.query, function (a){res.json(a);});});
+
+
+app.listen(3000);

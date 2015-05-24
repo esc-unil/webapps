@@ -4,37 +4,27 @@
  *
  */
 
-var async = require('async');
 var mongoClient = require('mongodb').MongoClient;
 
-var monitoring = require('./db.json');
+var database = require('./db.json');
 
-function run(database, col, target){
+function run(query, callback){
 //
     var login = '';
-    if (monitoring.mongoDB.user != '' && monitoring.mongoDB.password != ''){
-        login = monitoring.mongoDB.user + ':' + monitoring.mongoDB.password;
+    if (database.mongoDB.user != '' && database.mongoDB.password != ''){
+        login = database.mongoDB.user + ':' + database.mongoDB.password;
     }
-    var mongoPath = 'mongodb://' + login + monitoring.mongoDB.domain + ':' + monitoring.mongoDB.port + '/' + database;
+    var mongoPath = 'mongodb://' + login + database.mongoDB.domain + ':' + database.mongoDB.port + '/' + query.db;
     mongoClient.connect(mongoPath, function(err, db) {
-        if (err){console.log(err);}
+        if (err){
+            callback({error: err});
+        }
         else {
-            var i = 1;
-            async.eachSeries(
-                platforms,
-                function (platform, cb){
-                    platform.getURL(db, col, target, function(err){
-                        if (err) {console.log(err);}
-                        console.log('Platform ' + i.toString() + '/' + platforms.length.toString());
-                        i++;
-                        cb();
-                    });
-                },
-                function (){
-                    db.close();
-                    console.log('done');
-                }
-            )
+            db.collection(query.col).find({}).limit(20).toArray(function (err,res){db.close(); callback(res);});
+            //db.close();
+            //callback(query);
         }
     });
 }
+
+exports.run = run;
