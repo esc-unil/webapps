@@ -4,5 +4,9 @@
     "port": "",
     "user":"",
     "password":""
-  }
+  },
+
+  "platforms": ["google", "yahoo", "bing", "facebook", "twitter", "google_plus", "youtube", "reddit" ],
+
+  "keywords": []
 }

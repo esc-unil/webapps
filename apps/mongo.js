@@ -5,10 +5,9 @@
  */
 
 var mongoClient = require('mongodb').MongoClient;
-
 var database = require('./db.json');
 
-function run(query, callback){
+function run(query, app){
 //
     var login = '';
     if (database.mongoDB.user != '' && database.mongoDB.password != ''){
@@ -17,12 +16,18 @@ function run(query, callback){
     var mongoPath = 'mongodb://' + login + database.mongoDB.domain + ':' + database.mongoDB.port + '/' + query.db;
     mongoClient.connect(mongoPath, function(err, db) {
         if (err){
-            callback({error: err});
+            app.json({error: err});
         }
         else {
-            db.collection(query.col).find({}).limit(20).toArray(function (err,res){db.close(); callback(res);});
-            //db.close();
-            //callback(query);
+            if (query.method === 'count') {
+                db.collection(query.col).count({}, function (err,res){
+                    db.close();
+                    if (err) {app.json({error: err});}
+                    else {app.json(res);}
+                });
+            }
+            else {db.close();}
+
         }
     });
 }

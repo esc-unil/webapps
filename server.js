@@ -4,18 +4,22 @@
  *
  */
 
-
+var http = require('http');
 var express = require('express');
 var cors = require('cors');
 
-var mongo= require ('./apps/mongo.js');
+var mongo = require ('./apps/mongo.js');
+var hostnames = require ('./apps/hostnames.js');
 
 
 var app = express();
-app.use(cors({origin:'http://www.lactame.com'}));
+app.use(cors());
 
 
-app.get('/websearch', function(req, res) {mongo.run(req.query, function (a){res.json(a);});});
+app.get('/websearch', function(req, res) {mongo.run(req.query, res);});
+
+app.get('/websearch/hostnames', function(req, res) {hostnames.run(req.query, res);});
 
 
 app.listen(3000);
+
