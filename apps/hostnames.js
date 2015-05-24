@@ -26,7 +26,7 @@ function run(query, app){
         else {
             var results = {};
             async.eachSeries(
-                ['platforms', 'keywords', 'data'],
+                ['platforms', 'keywords', 'data', 'timelines'],
                 function (item, cb){
                     query.target = {};
                     if (query.class != 'all' && query.class != 'null' && query.class != ''){query.target.class = query.class;}
@@ -47,8 +47,25 @@ function run(query, app){
     });
 }
 
+requests.timelines = function(db, query, callback){
+    query.target.platforms = 'google';
+    var date = {};
+    date['stats.google.date'] = 1;
+    var projection = {_id:0};
+    projection['stats.google.date'] = 1;
+    db.collection(query.col).find(query.target,projection).sort(date).toArray(function (err, res) {
+        if (err) {callback(err);}
+        else {
+            var results = [];
+            for (var i=0; i < res.length; i++) {
+                var obj = {x: res[i].stats['google'].date.getTime(), y: i + 1};
+                results.push(obj);
+            }
+            callback(null, results);}
+    });
+};
+
 requests.data = function(db, query, callback){
-    console.log(query.target);
     db.collection(query.col).find(query.target).toArray(function (err, res) {
         if (err) {callback(err);}
         else {callback(null, res);}
