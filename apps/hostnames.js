@@ -49,6 +49,8 @@ function run(query, app){
     });
 }
 
+//----------------------------------------------------------------------------------------------------------------------
+
 requests.timelinesCanv = function(db, query, callback){
     query.target.platforms = 'google';
     var date = {};
@@ -67,7 +69,10 @@ requests.timelinesCanv = function(db, query, callback){
     });
 };
 
+//-----------------sparklines-------------------------------------------------------------------------------------------
+
 requests.sparklines = function(db, query, callback){
+    // sparklines par plates-formes
     var results = [];
     async.eachSeries(
         database.platforms,
@@ -85,12 +90,12 @@ requests.sparklines = function(db, query, callback){
                     }
                     else {
                         var platform = {
-                            index: item,
-                            theIndicator: {type: 'sparkline', value: []}
+                            Platform: item,
+                            Nb_hostnames: {type: 'sparkline', value: []}
                         };
                         for (var i = 0; i < res.length; i++) {
                             var obj = res[i].stats[item].date.getTime().toString() + ':' + (i + 1).toString();
-                            platform.theIndicator.value.push(obj);
+                            platform.Nb_hostnames.value.push(obj);
                         }
                         results.push(platform);
                         cb();
@@ -116,7 +121,7 @@ requests.data = function(db, query, callback){
 };
 
 requests.platforms = function(db, query, callback){
-    // stats par platforme
+    // stats par plates-formes
     var results = {};
     async.each(
         database.platforms,
