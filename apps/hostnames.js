@@ -2,6 +2,8 @@
 /**
  * Created by tpineau
  *
+ * Pour une utilisation avec le Visualizer: https://github.com/npellet/visualizer
+ *
  * query : {
  *  db: 'string',              le nom de la mongoDB
  *  col: 'string';             la collection contenant les hostnames
@@ -26,7 +28,7 @@ function run(query, app){
         else {
             var results = {};
             async.eachSeries(
-                ['platforms', 'keywords', 'data', 'timelines'],
+                ['platforms', 'keywords', 'data', 'sparklines'],
                 function (item, cb){
                     query.target = {};
                     if (query.class != 'all' && query.class != 'null' && query.class != ''){query.target.class = query.class;}
@@ -47,7 +49,7 @@ function run(query, app){
     });
 }
 
-requests.timelines = function(db, query, callback){
+requests.timelinesCanv = function(db, query, callback){
     query.target.platforms = 'google';
     var date = {};
     date['stats.google.date'] = 1;
@@ -65,7 +67,48 @@ requests.timelines = function(db, query, callback){
     });
 };
 
+requests.sparklines = function(db, query, callback){
+    var results = [];
+    async.eachSeries(
+        database.platforms,
+        function(item, cb) {
+            if (item === 'total') {cb();}
+            else {
+                query.target.platforms = item;
+                var date = {};
+                date['stats.' + item + '.date'] = 1;
+                var projection = {_id: 0};
+                projection['stats.' + item + '.date'] = 1;
+                db.collection(query.col).find(query.target, projection).sort(date).toArray(function (err, res) {
+                    if (err) {
+                        callback(err);
+                    }
+                    else {
+                        var platform = {
+                            index: item,
+                            theIndicator: {type: 'sparkline', value: []}
+                        };
+                        for (var i = 0; i < res.length; i++) {
+                            var obj = res[i].stats[item].date.getTime().toString() + ':' + (i + 1).toString();
+                            platform.theIndicator.value.push(obj);
+                        }
+                        results.push(platform);
+                        cb();
+                    }
+                });
+            }
+        },
+        function(err){
+            if (err){callback(err);}
+            else{callback(null,results);}
+        }
+    );
+};
+
+//-------------------------------------stats count------------------------------------------------------------------
+
 requests.data = function(db, query, callback){
+    // contenu de la collection
     db.collection(query.col).find(query.target).toArray(function (err, res) {
         if (err) {callback(err);}
         else {callback(null, res);}
@@ -73,6 +116,7 @@ requests.data = function(db, query, callback){
 };
 
 requests.platforms = function(db, query, callback){
+    // stats par platforme
     var results = {};
     async.each(
         database.platforms,
@@ -92,6 +136,7 @@ requests.platforms = function(db, query, callback){
 };
 
 requests.keywords = function(db, query, callback){
+    // stats par mots-clefs
     var results = {};
     async.eachLimit(
         database.keywords,
