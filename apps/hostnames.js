@@ -28,7 +28,7 @@ function run(query, app){
         else {
             var results = {};
             async.eachSeries(
-                ['platforms', 'keywords', 'data', 'sparklines'],
+                ['platforms', 'keywords', 'timelines'],
                 function (item, cb){
                     query.target = {};
                     if (query.class != 'all' && query.class != 'null' && query.class != ''){query.target.class = query.class;}
@@ -49,63 +49,76 @@ function run(query, app){
     });
 }
 
-//----------------------------------------------------------------------------------------------------------------------
-
-requests.timelinesCanv = function(db, query, callback){
-    query.target.platforms = 'google';
-    var date = {};
-    date['stats.google.date'] = 1;
-    var projection = {_id:0};
-    projection['stats.google.date'] = 1;
-    db.collection(query.col).find(query.target,projection).sort(date).toArray(function (err, res) {
-        if (err) {callback(err);}
-        else {
-            var results = [];
-            for (var i=0; i < res.length; i++) {
-                var obj = {x: res[i].stats['google'].date.getTime(), y: i + 1};
-                results.push(obj);
-            }
-            callback(null, results);}
-    });
-};
-
-//-----------------sparklines-------------------------------------------------------------------------------------------
-
-requests.sparklines = function(db, query, callback){
-    // sparklines par plates-formes
-    var results = [];
-    async.eachSeries(
+requests.timelines = function(db, query, callback){
+    // timelines par plates-formes
+    var results = {
+        type: 'chart',
+        value: {
+            data: []
+        }
+    };
+    async.concatSeries(
         database.platforms,
         function(item, cb) {
-            if (item === 'total') {cb();}
-            else {
+            var date = {};
+            var projection = {_id:0};
+            if (item != 'total') {
                 query.target.platforms = item;
-                var date = {};
                 date['stats.' + item + '.date'] = 1;
-                var projection = {_id: 0};
                 projection['stats.' + item + '.date'] = 1;
-                db.collection(query.col).find(query.target, projection).sort(date).toArray(function (err, res) {
-                    if (err) {
-                        callback(err);
-                    }
-                    else {
-                        var platform = {
-                            Platform: item,
-                            Nb_hostnames: {type: 'sparkline', value: []}
-                        };
-                        for (var i = 0; i < res.length; i++) {
-                            var obj = res[i].stats[item].date.getTime().toString() + ':' + (i + 1).toString();
-                            platform.Nb_hostnames.value.push(obj);
-                        }
-                        results.push(platform);
-                        cb();
-                    }
-                });
             }
+            else {
+                delete query.target.platforms;
+                date['date'] = 1;
+                projection['date'] = 1;
+            }
+            db.collection(query.col).find(query.target, projection).sort(date).toArray(function (err, res) {
+                if (err) {cb(err);}
+                else {
+                    var serie = {
+                        label: item,
+                        x: [],
+                        y: []
+                    };
+
+                    var x, y;
+                    for (var i=0; i < res.length; i++) {
+                        var x_p = x, y_p = y; //var precedentes
+                        if (item != 'total') {
+                            x = res[i].stats[item].date.getTime();
+                            y = i+1;
+                            if (i === res.length-1){
+                                serie.x.push(x);
+                                serie.y.push(y);
+                            }
+                            else if (i != 0 && res[i].stats[item].date.toDateString() != res[i-1].stats[item].date.toDateString()){
+                                serie.x.push(x_p);
+                                serie.y.push(y_p);
+                            }
+                        }
+                        else {
+                            x = res[i].date.getTime();
+                            y = i+1;
+                            if (i === res.length-1){
+                                serie.x.push(x);
+                                serie.y.push(y);
+                            }
+                            else if (i != 0 && res[i].date.toDateString() != res[i-1].date.toDateString()){
+                                serie.x.push(x_p);
+                                serie.y.push(y_p);
+                            }
+                        }
+                    }
+                    cb(null, serie);
+                }
+            });
         },
-        function(err){
+        function(err, series){
             if (err){callback(err);}
-            else{callback(null,results);}
+            else{
+                results.value.data = series;
+                callback(null, results);
+            }
         }
     );
 };
