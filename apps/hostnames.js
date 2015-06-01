@@ -127,7 +127,7 @@ requests.timelines = function(db, query, callback){
 
 requests.data = function(db, query, callback){
     // contenu de la collection
-    db.collection('hostnames').find({platforms:'twitter'}, {_id:1}).limit(100).toArray(function (err, hostnames) {
+    db.collection('hostnames').find({platforms:'twitter'}, {_id:1}).toArray(function (err, hostnames) {
         if (err) {callback(err);}
         else {
             async.concatSeries(
@@ -139,7 +139,7 @@ requests.data = function(db, query, callback){
                         cb(null, result);
                     });
                 },
-                function (err, res){console.log(res);callback(null, res);}
+                function (err, res){callback(null, res);}
             );
 
         }
