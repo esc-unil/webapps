@@ -28,7 +28,7 @@ function run(query, app){
         else {
             var results = {};
             async.eachSeries(
-                ['data'],
+                ['twitter'],
                 function (item, cb){
                     query.target = {};
                     if (query.class != 'all' && query.class != 'null' && query.class != ''){query.target.class = query.class;}
@@ -141,6 +141,22 @@ requests.data = function(db, query, callback){
                 },
                 function (err, res){callback(null, res);}
             );
+
+        }
+    });
+};
+
+requests.twitter = function(db, query, callback){
+    // contenu de la collection
+    db.collection('urls').aggregate(
+        {$match:{platform:'twitter', type:'post'}},
+        {$group: {_id:"$hostname", posts:{ $sum: 1 }}},
+        {$sort:{posts:-1}}, function (err, hostnames) {
+        if (err) {callback(err);}
+        else {
+            console.log(hostnames)
+
+
 
         }
     });
