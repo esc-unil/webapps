@@ -28,7 +28,7 @@ function run(query, app){
         else {
             var results = {};
             async.eachSeries(
-                ['platforms', 'keywords', 'timelines'],
+                ['data'],
                 function (item, cb){
                     query.target = {};
                     if (query.class != 'all' && query.class != 'null' && query.class != ''){query.target.class = query.class;}
@@ -127,7 +127,28 @@ requests.timelines = function(db, query, callback){
 
 requests.data = function(db, query, callback){
     // contenu de la collection
-    db.collection(query.col).find(query.target).toArray(function (err, res) {
+    db.collection('hostnames').find({platforms:'twitter'}, {_id:1}).limit(100).toArray(function (err, hostnames) {
+        if (err) {callback(err);}
+        else {
+            async.concatSeries(
+                hostnames,
+                function(hostname, cb){
+                    var result = {hostname: hostname._id};
+                    db.collection('urls').distinct('info.id', {hostname: hostname._id, platform:'twitter',type:'post'}, function (err, res){
+                        result.twitter_post = res.length;
+                        cb(null, result);
+                    });
+                },
+                function (err, res){console.log(res);callback(null, res);}
+            );
+
+        }
+    });
+};
+
+requests.urls = function(db, query, callback){
+    // contenu de la collection
+    db.collection('urls').find(query.target).toArray(function (err, res) {
         if (err) {callback(err);}
         else {callback(null, res);}
     });
