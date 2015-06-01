@@ -49,8 +49,13 @@ function run(query, app){
     });
 }
 
+function dateJour(datebson){
+    var date = datebson.getTime() - (datebson.getTime() % 86400000) + new Date().getTimezoneOffset() * 60000;
+    return date;
+}
+
+
 requests.timelines = function(db, query, callback){
-    // timelines par plates-formes
     var results = {
         type: 'chart',
         value: {
@@ -75,41 +80,37 @@ requests.timelines = function(db, query, callback){
             db.collection(query.col).find(query.target, projection).sort(date).toArray(function (err, res) {
                 if (err) {cb(err);}
                 else {
-                    var serie = {
-                        label: item,
-                        x: [],
-                        y: []
-                    };
-
-                    var x, y;
+                    var serie = {label: item, x: [], y: []}, data = [], obj=[];
                     for (var i=0; i < res.length; i++) {
-                        var x_p = x, y_p = y; //var precedentes
+                        var objp = obj;
                         if (item != 'total') {
-                            x = res[i].stats[item].date.getTime();
-                            y = i+1;
-                            if (i === res.length-1){
-                                serie.x.push(x);
-                                serie.y.push(y);
-                            }
-                            else if (i != 0 && res[i].stats[item].date.toDateString() != res[i-1].stats[item].date.toDateString()){
-                                serie.x.push(x_p);
-                                serie.y.push(y_p);
-                            }
+                            obj = {x: dateJour(res[i].stats[item].date),  y: i + 1};
+                            if (i === res.length-1){data.push(obj);}
+                            else if (i != 0 && objp.x != obj.x){data.push(objp);}
                         }
                         else {
-                            x = res[i].date.getTime();
-                            y = i+1;
-                            if (i === res.length-1){
-                                serie.x.push(x);
-                                serie.y.push(y);
-                            }
-                            else if (i != 0 && res[i].date.toDateString() != res[i-1].date.toDateString()){
-                                serie.x.push(x_p);
-                                serie.y.push(y_p);
+                            obj = {x: dateJour(res[i].date), y: i + 1};
+                            if (i === res.length-1){data.push(obj);}
+                            else if (i != 0 && objp.x != obj.x){data.push(objp);}}
+                    }
+                    for (var i=0; i < data.length; i++){  //ajout des dates sans nouveau hostname
+                        if (i>0 && data[i].x-data[i-1].x > 86400000){
+                            var n = (data[i].x-data[i-1].x)/86400000;
+                            for (var j=1; j < n ; j++){
+                                serie.x.push(data[i-1].x+j*86400000);
+                                serie.y.push(data[i-1].y);
                             }
                         }
+                        serie.x.push(data[i].x);
+                        serie.y.push(data[i].y);
                     }
-                    cb(null, serie);
+                    var datelast = serie.x[serie.x.length-1];
+                    while (datelast < dateJour(new Date())){ // ajout des dates jusqu'a ajd
+                        datelast = datelast + 86400000;
+                        serie.x.push(datelast);
+                        serie.y.push(serie.y[serie.y.length-1]);
+                    }
+                    cb(null, [serie]);
                 }
             });
         },
@@ -122,7 +123,6 @@ requests.timelines = function(db, query, callback){
         }
     );
 };
-
 //-------------------------------------stats count------------------------------------------------------------------
 
 requests.data = function(db, query, callback){
