@@ -173,7 +173,8 @@ requests.youtube = function(db, query, callback){
     db.collection('urls').aggregate(
         {$match:{platform:'youtube', type:'video'}},
         {$group: {_id:"$hostname", posts:{ $sum: 1 }}},
-        {$sort:{posts:-1}}, function (err, hostnames) {
+        {$sort:{posts:-1}},
+        {$limit:10}, function (err, hostnames) {
             if (err) {callback(err);}
             else {
                 async.concatSeries(
