@@ -28,7 +28,7 @@ function run(query, app){
         else {
             var results = {};
             async.eachSeries(
-                ['twitter'],
+                ['youtube'],
                 function (item, cb){
                     query.target = {};
                     if (query.class != 'all' && query.class != 'null' && query.class != ''){query.target.class = query.class;}
@@ -154,12 +154,64 @@ requests.twitter = function(db, query, callback){
         {$sort:{posts:-1}}, function (err, hostnames) {
         if (err) {callback(err);}
         else {
-            console.log(hostnames)
-
-
-
+            var hostname = hostnames[0]["_id"];
+            db.collection('urls').aggregate(
+                {$match:{platform:'twitter', type:'post', hostname:hostname}},
+                {$group: {
+                    _id:{ day: {$dayOfMonth: "$info.date"}, month: {$month: "$info.date"}, year: { $year: "$info.date"}},
+                    posts:{ $sum: 1 }}},
+                {$sort:{posts:1}}, function (err, data) {
+                    if (err) {callback(err);}
+                    else{callback(null, data);}
+                });
         }
     });
+};
+
+requests.youtube = function(db, query, callback){
+    // contenu de la collection
+    db.collection('urls').aggregate(
+        {$match:{platform:'youtube', type:'video'}},
+        {$group: {_id:"$hostname", posts:{ $sum: 1 }}},
+        {$sort:{posts:-1}}, function (err, hostnames) {
+            if (err) {callback(err);}
+            else {
+                //var hostname = hostnames[0]["_id"];
+                async.concatSeries(
+                    hostnames,
+                    function(hostname, cb){
+                        db.collection('urls').aggregate(
+                            {$match:{platform:'youtube', type:'video', hostname:hostname._id}},
+                            {$group: {
+                                _id:{ day: {$dayOfMonth: "$info.date"}, month: {$month: "$info.date"}, year: { $year: "$info.date"}},
+                                posts:{ $sum: 1 }}},
+                            {$sort:{posts:1}}, function (err, data) {
+                                if (err) {cb(err);}
+                                else{
+                                    var result = {hostname: hostname._id, posts: hostname.posts, data:data};
+                                    cb(null, result);
+                                }
+                            });
+                    },
+                    function(err, res){
+                        if (err){callback(err);}
+                        else {callback(null, res);}
+
+                    }
+                );
+
+                /*
+                db.collection('urls').aggregate(
+                    {$match:{platform:'youtube', type:'video', hostname:hostname}},
+                    {$group: {
+                        _id:{ day: {$dayOfMonth: "$info.date"}, month: {$month: "$info.date"}, year: { $year: "$info.date"}},
+                        posts:{ $sum: 1 }}},
+                    {$sort:{posts:1}}, function (err, data) {
+                        if (err) {callback(err);}
+                        else{callback(null, data);}
+                    });*/
+            }
+        });
 };
 
 requests.urls = function(db, query, callback){
