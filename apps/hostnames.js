@@ -171,7 +171,7 @@ requests.twitter = function(db, query, callback){
 requests.youtube = function(db, query, callback){
     // contenu de la collection
     db.collection('urls').aggregate(
-        {$match:{platform:'youtube', type:'video'}},
+        {$match:{platform:'youtube', type:'videos'}},
         {$group: {_id:"$hostname", posts:{ $sum: 1 }}},
         {$sort:{posts:-1}},
         {$limit:10}, function (err, hostnames) {
@@ -181,7 +181,7 @@ requests.youtube = function(db, query, callback){
                     hostnames,
                     function(hostname, cb){
                         db.collection('urls').aggregate(
-                            {$match:{platform:'youtube', type:'video', hostname:hostname._id}},
+                            {$match:{platform:'youtube', type:'videos', hostname:hostname._id}},
                             {$group: {
                                 _id:{ day: {$dayOfMonth: "$info.date"}, month: {$month: "$info.date"}, year: { $year: "$info.date"}},
                                 posts:{ $sum: 1 }}},
